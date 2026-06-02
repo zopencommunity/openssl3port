@@ -1,4 +1,4 @@
-# bump: openssl-3-version /OPENSSL_3_VERSION="(.*)"/ https://www.openssl.org/source/|re:/openssl-([\d.]+).tar.gz/$1/|semver:*
+# bump: openssl-3-version /OPENSSL_3_VERSION="(.*)"/ https://www.openssl.org/source/|re:/openssl-([\d.]+).tar.gz/$1/|semver:3.*
 OPENSSL_3_VERSION="3.6.0"
 
 export ZOPEN_BUILD_LINE="STABLE"
