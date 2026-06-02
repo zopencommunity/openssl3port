@@ -1,0 +1,70 @@
+# bump: openssl-3-version /OPENSSL_3_VERSION="(.*)"/ https://www.openssl.org/source/|re:/openssl-([\d.]+).tar.gz/$1/|semver:*
+OPENSSL_3_VERSION="3.6.0"
+
+export ZOPEN_BUILD_LINE="STABLE"
+export ZOPEN_STABLE_URL="https://github.com/openssl/openssl.git"
+export ZOPEN_STABLE_URL="https://www.openssl.org/source/openssl-${OPENSSL_3_VERSION}.tar.gz"
+export ZOPEN_STABLE_TAG="openssl-${OPENSSL_3_VERSION}"
+export ZOPEN_STABLE_DEPS="make m4 perl"
+
+export ZOPEN_DEV_URL="https://github.com/openssl/openssl.git"
+export ZOPEN_DEV_DEPS="curl git gzip make m4 perl tar zoslib"
+
+export ZOPEN_CONFIGURE="./Configure"
+export ZOPEN_EXTRA_CONFIGURE_OPTS="OS390-ASCII"
+export ZOPEN_CHECK_OPTS="HARNESS_JOBS=\$ZOPEN_NUM_JOBS test"
+export ZOPEN_EXTRA_CFLAGS="${ZOPEN_EXTRA_CFLAGS} -std=gnu99"
+export ZOPEN_EXTRA_CPPFLAGS="${ZOPEN_EXTRA_CPPFLAGS} -DNI_MAXSERV=32 -DNI_MAXHOST=1025"
+export LDLIBS="${ZOPEN_EXTRA_LIBS}"
+export ZOPEN_NAME="openssl3-${OPENSSL_3_VERSION}"
+
+zopen_append_to_env()
+{
+cat <<ZZ
+if [ ! -z "\$ZOPEN_IN_ZOPEN_BUILD" ]; then
+  export ZOPEN_EXTRA_CFLAGS="\${ZOPEN_EXTRA_CFLAGS} -I\$PWD/include"
+  export ZOPEN_EXTRA_CXXFLAGS="\${ZOPEN_EXTRA_CXXFLAGS} -I\$PWD/include"
+  export ZOPEN_EXTRA_LDFLAGS="\${ZOPEN_EXTRA_LDFLAGS} -L\$PWD/lib"
+  export ZOPEN_EXTRA_LIBS="\${ZOPEN_EXTRA_LIBS} -lssl -lcrypto"
+
+  export OPENSSL_CFLAGS="-I\$PWD/include"
+  export OPENSSL_LDFLAGS="-L\$PWD/lib"
+  export OPENSSL_LIBS="-lssl -lcrypto"
+fi
+ZZ
+}
+
+zopen_check_results()
+{
+chk="$1/$2_check.log"
+
+successes=$(grep -E " ok$" ${chk} | wc -l)
+totalTests=$(grep -E "^Failed | ok$" ${chk} | wc -l)
+failures="$((totalTests-successes))"
+
+if [ ! -z "$OPENSSL_HW_BUILD" ]; then
+  cat <<ZZ
+  actualFailures:$failures
+  totalTests:$totalTests
+  expectedFailures:17
+ZZ
+else
+  cat <<ZZ
+  actualFailures:$failures
+  totalTests:$totalTests
+  expectedFailures:12
+ZZ
+fi
+}
+
+zopen_append_to_zoslib_env() {
+cat <<EOF
+OPENSSL_CONF|set|PROJECT_ROOT/ssl/openssl.cnf
+EOF
+}
+
+zopen_get_version()
+{
+  echo "$OPENSSL_3_VERSION"
+}
+
